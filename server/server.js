@@ -22,7 +22,9 @@ const app = express();
 app.use(cors());
 const PORT = process.env.PORT || 5000;
 app.use(bodyParser.json());
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(err => console.error("❌ MongoDB Connection Error:", err));
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
@@ -331,17 +333,17 @@ app.post('/api/prompt', async (req, res) => {
         },
     ];
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro", safetySettings });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", safetySettings });
 
     const prompt = promptString;
 
     await model.generateContent(prompt).then(result => {
-        const response = result.response;
-        const generatedText = response.text();
+        const generatedText = result.response.candidates[0].content.parts[0].text;
         res.status(200).json({ generatedText });
     }).catch(error => {
-        res.status(500).json({ success: false, message: 'Internal server error' });
-    })
+        console.error("API Error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    });
 });
 
 //GET GENERATE THEORY
@@ -369,7 +371,7 @@ app.post('/api/generate', async (req, res) => {
         },
     ];
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro", safetySettings });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", safetySettings });
 
     const prompt = promptString
 
@@ -2043,7 +2045,7 @@ app.post('/api/chat', async (req, res) => {
         },
     ];
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", safetySettings });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", safetySettings });
 
     const prompt = promptString;
 
@@ -2204,7 +2206,7 @@ app.post('/api/aiexam', async (req, res) => {
             },
         ];
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", safetySettings });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", safetySettings });
 
         await model.generateContent(prompt).then(async result => {
             const response = result.response;
